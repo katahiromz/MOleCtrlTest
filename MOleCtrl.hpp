@@ -3,7 +3,7 @@
 ////////////////////////////////////////////////////////////////////////////
 
 #ifndef MZC4_MOLECTRL_HPP_
-#define MZC4_MOLECTRL_HPP_      5       /* Version 5 */
+#define MZC4_MOLECTRL_HPP_      6       /* Version 6 */
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -41,12 +41,6 @@ public:
         wcx.hbrBackground = NULL;
     }
 
-    BOOL CreateInstanceByString(const OLECHAR *str);
-    BOOL CreateInstanceByProgID(const OLECHAR *progid);
-    BOOL CreateInstanceByCLSID(CLSID clsid);
-    BOOL CreateInstanceByURL(const OLECHAR *url);
-    VOID DestroyInstance();
-
     IDispatch *GetDispatch();
     IUnknown *GetUnknown();
     IWebBrowser2 *GetWebBrowser2();
@@ -54,7 +48,6 @@ public:
     VOID UIActivate();
     VOID InPlaceActivate();
     VOID Show(BOOL fVisible = TRUE);
-
     BOOL TranslateAccelerator(LPMSG pMsg);
 
     void DoVerb(LONG iVerb);
@@ -135,6 +128,12 @@ protected:
     IWebBrowser2 *  m_pWebBrowser2;
     RECT            m_rc;
     CLSID           m_clsid;
+
+    BOOL CreateInstanceByString(const OLECHAR *str);
+    BOOL CreateInstanceByProgID(const OLECHAR *progid);
+    BOOL CreateInstanceByCLSID(CLSID clsid);
+    BOOL CreateInstanceByURL(const OLECHAR *url);
+    VOID DestroyInstance();
 
     BOOL OnCreate(HWND hwnd, LPCREATESTRUCT lpCreateStruct);
     void OnDestroy(HWND hwnd);
