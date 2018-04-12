@@ -3,7 +3,7 @@
 ////////////////////////////////////////////////////////////////////////////
 
 #ifndef MZC4_MOLECTRL_HPP_
-#define MZC4_MOLECTRL_HPP_      6       /* Version 6 */
+#define MZC4_MOLECTRL_HPP_      7       /* Version 7 */
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -131,7 +131,7 @@ protected:
 
     BOOL CreateInstanceByString(const OLECHAR *str);
     BOOL CreateInstanceByProgID(const OLECHAR *progid);
-    BOOL CreateInstanceByCLSID(CLSID clsid);
+    BOOL CreateInstanceByCLSID(const CLSID& clsid);
     BOOL CreateInstanceByURL(const OLECHAR *url);
     VOID DestroyInstance();
 
@@ -170,7 +170,7 @@ inline BOOL MOleCtrl::CreateInstanceByProgID(const OLECHAR *progid)
     return CreateInstanceByCLSID(clsid);
 }
 
-inline BOOL MOleCtrl::CreateInstanceByCLSID(CLSID clsid)
+inline BOOL MOleCtrl::CreateInstanceByCLSID(const CLSID& clsid)
 {
     ::CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER,
                        IID_IUnknown, reinterpret_cast<void **>(&m_pUnknown));
