@@ -3,7 +3,7 @@
 ////////////////////////////////////////////////////////////////////////////
 
 #ifndef MZC4_MOLECTRL_HPP_
-#define MZC4_MOLECTRL_HPP_      13      /* Version 13 */
+#define MZC4_MOLECTRL_HPP_      14      /* Version 14 */
 
 struct MVariant;
 class MOleCtrl;
@@ -959,7 +959,7 @@ inline void MOleCtrl::OnPaint(HWND hwnd)
                 rect.bottom = m_rc.bottom;
 
                 pView->Draw(DVASPECT_CONTENT, ~0, NULL, NULL, 0,
-                                  hDC, &rect, &rect, NULL, 0);
+                            hDC, &rect, &rect, NULL, 0);
                 pView->Release();
             }
             pioo->Release();
