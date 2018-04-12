@@ -3,7 +3,7 @@
 ////////////////////////////////////////////////////////////////////////////
 
 #ifndef MZC4_MOLECTRL_HPP_
-#define MZC4_MOLECTRL_HPP_      7       /* Version 7 */
+#define MZC4_MOLECTRL_HPP_      8       /* Version 8 */
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -11,6 +11,43 @@
 
 #include <exdisp.h>
 #include <ocidl.h>
+
+////////////////////////////////////////////////////////////////////////////
+
+struct MVariant : VARIANT
+{
+    MVariant()
+    {
+        vt = VT_EMPTY;
+    }
+    MVariant(LONG i4)
+    {
+        vt = VT_I4;
+        lVal = i4;
+    }
+    MVariant(const WCHAR *psz)
+    {
+        vt = VT_BSTR;
+        bstrVal = ::SysAllocString(psz);
+    }
+    MVariant(IDispatch *pdisp)
+    {
+        vt = VT_DISPATCH;
+        pdispVal = pdisp;
+    }
+    ~MVariant()
+    {
+        VariantClear(this);
+    }
+    operator VARIANT *()
+    {
+        return this;
+    }
+    operator const VARIANT *() const
+    {
+        return this;
+    }
+};
 
 ////////////////////////////////////////////////////////////////////////////
 // NOTE: IMPLEMENT_DYNAMIC(MOleCtrl) is required in a *.cpp source file.
@@ -65,13 +102,6 @@ public:
     STDMETHODIMP ShowObject();
     STDMETHODIMP OnShowWindow(BOOL fShow);
     STDMETHODIMP RequestNewObjectLayout();
-
-    // IAdviseSink
-    STDMETHODIMP_(void) OnDataChange(FORMATETC *pFormatEtc, STGMEDIUM *pStgmed);
-    STDMETHODIMP_(void) OnViewChange(DWORD dwAspect, LONG lIndex);
-    STDMETHODIMP_(void) OnRename(IMoniker *pmk);
-    STDMETHODIMP_(void) OnSave();
-    STDMETHODIMP_(void) OnClose();
 
     // IOleWindow Methods
     STDMETHODIMP GetWindow(HWND *phwnd);
@@ -218,24 +248,11 @@ inline HRESULT MOleCtrl::Navigate(const WCHAR *url)
 {
     if (IWebBrowser2 *pWebBrowser2 = GetWebBrowser2())
     {
-        VARIANT vURL;
-        vURL.vt = VT_BSTR;
+        if (url == NULL)
+            url = L"about:blank";
 
-        if (url)
-            vURL.bstrVal = ::SysAllocString(url);
-        else
-            vURL.bstrVal = ::SysAllocString(L"about:blank");
-
-        VARIANT ve1, ve2, ve3, ve4;
-        ve1.vt = VT_EMPTY;
-        ve2.vt = VT_EMPTY;
-        ve3.vt = VT_EMPTY;
-        ve4.vt = VT_EMPTY;
-
+        MVariant vURL(url), ve1, ve2, ve3, ve4;
         HRESULT hr = pWebBrowser2->Navigate2(&vURL, &ve1, &ve2, &ve3, &ve4);
-
-        // Also frees memory allocated by SysAllocString
-        VariantClear(&vURL);
 
         pWebBrowser2->Release();
 
@@ -452,26 +469,6 @@ inline STDMETHODIMP MOleCtrl::OnShowWindow(BOOL fShow)
 inline STDMETHODIMP MOleCtrl::RequestNewObjectLayout()
 {
     return E_NOTIMPL;
-}
-
-inline STDMETHODIMP_(void) MOleCtrl::OnDataChange(FORMATETC *pFormatEtc, STGMEDIUM *pStgmed)
-{
-}
-
-inline STDMETHODIMP_(void) MOleCtrl::OnViewChange(DWORD dwAspect, LONG lIndex)
-{
-}
-
-inline STDMETHODIMP_(void) MOleCtrl::OnRename(IMoniker *pmk)
-{
-}
-
-inline STDMETHODIMP_(void) MOleCtrl::OnSave()
-{
-}
-
-inline STDMETHODIMP_(void) MOleCtrl::OnClose()
-{
 }
 
 inline STDMETHODIMP MOleCtrl::GetWindow(HWND *phwnd)
