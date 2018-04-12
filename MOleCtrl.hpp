@@ -3,7 +3,7 @@
 ////////////////////////////////////////////////////////////////////////////
 
 #ifndef MZC4_MOLECTRL_HPP_
-#define MZC4_MOLECTRL_HPP_      12      /* Version 12 */
+#define MZC4_MOLECTRL_HPP_      13      /* Version 13 */
 
 struct MVariant;
 class MOleCtrl;
@@ -43,6 +43,13 @@ struct MVariant : VARIANT
     {
         vt = VT_DISPATCH;
         pdispVal = pdisp;
+        pdisp->AddRef();
+    }
+    MVariant(IUnknown *punk)
+    {
+        vt = VT_UNKNOWN;
+        punkVal = punk;
+        punk->AddRef();
     }
     ~MVariant()
     {
