@@ -3,7 +3,7 @@
 ////////////////////////////////////////////////////////////////////////////
 
 #ifndef MZC4_MOLECTRL_HPP_
-#define MZC4_MOLECTRL_HPP_      9       /* Version 9 */
+#define MZC4_MOLECTRL_HPP_      11      /* Version 11 */
 
 struct MVariant;
 class MOleCtrl;
@@ -33,6 +33,12 @@ struct MVariant : VARIANT
         vt = VT_BSTR;
         bstrVal = ::SysAllocString(psz);
     }
+    MVariant(const BYTE *pb, UINT cb)
+    {
+        SAFEARRAYBOUND bound = { cb, 0 };
+        vt = VT_ARRAY | VT_UI1;
+        parray = SafeArrayCreate(VT_UI1, cb, &bound);
+    }
     MVariant(IDispatch *pdisp)
     {
         vt = VT_DISPATCH;
@@ -49,6 +55,16 @@ struct MVariant : VARIANT
     operator const VARIANT *() const
     {
         return this;
+    }
+    operator BSTR()
+    {
+        return bstrVal;
+    }
+    operator BSTR *()
+    {
+        VariantClear(this);
+        vt = VT_BSTR;
+        return &bstrVal;
     }
 };
 
@@ -83,15 +99,31 @@ public:
 
     IDispatch *GetDispatch();
     IUnknown *GetUnknown();
-    IWebBrowser2 *GetWebBrowser2();
 
     VOID UIActivate();
     VOID InPlaceActivate();
     VOID Show(BOOL fVisible = TRUE);
     BOOL TranslateAccelerator(LPMSG pMsg);
-
     void DoVerb(LONG iVerb);
-    HRESULT Navigate(const WCHAR *url);
+
+    // Web Browser actions
+    IWebBrowser2 *GetWebBrowser2();
+    HRESULT Navigate(BSTR URL, VARIANT *Flags, VARIANT *TargetFrameName, VARIANT *PostData, VARIANT *Headers);
+    HRESULT Navigate2(VARIANT *URL, VARIANT *Flags, VARIANT *TargetFrameName, VARIANT *PostData, VARIANT *Headers);
+    HRESULT NavigateDx(const WCHAR *url);
+    HRESULT GoBack();
+    HRESULT GoForward();
+    HRESULT GoHome();
+    HRESULT Refresh();
+    HRESULT Stop();
+
+    // Web Browser properties
+    HRESULT get_Visible(VARIANT_BOOL *pBool);
+    HRESULT put_Visible(VARIANT_BOOL Value);
+    HRESULT get_FullScreen(VARIANT_BOOL *pbFullScreen);
+    HRESULT put_FullScreen(VARIANT_BOOL bFullScreen);
+    HRESULT get_LocationName(BSTR *LocationName);
+    HRESULT get_LocationURL(BSTR *LocationURL);
 
     // IUnknown
     STDMETHODIMP QueryInterface(REFIID riid, void **ppvObject);
@@ -247,22 +279,164 @@ inline BOOL MOleCtrl::CreateInstanceByCLSID(const CLSID& clsid)
     return FALSE;
 }
 
-inline HRESULT MOleCtrl::Navigate(const WCHAR *url)
+inline HRESULT MOleCtrl::get_Visible(VARIANT_BOOL *pBool)
 {
+    HRESULT hr = E_FAIL;
+    if (IWebBrowser2 *pWebBrowser2 = GetWebBrowser2())
+    {
+        hr = pWebBrowser2->get_Visible(pBool);
+        pWebBrowser2->Release();
+    }
+    return hr;
+}
+
+inline HRESULT MOleCtrl::put_Visible(VARIANT_BOOL Value)
+{
+    HRESULT hr = E_FAIL;
+    if (IWebBrowser2 *pWebBrowser2 = GetWebBrowser2())
+    {
+        hr = pWebBrowser2->put_Visible(Value);
+        pWebBrowser2->Release();
+    }
+    return hr;
+}
+
+inline HRESULT MOleCtrl::get_FullScreen(VARIANT_BOOL *pbFullScreen)
+{
+    HRESULT hr = E_FAIL;
+    if (IWebBrowser2 *pWebBrowser2 = GetWebBrowser2())
+    {
+        hr = pWebBrowser2->get_FullScreen(pbFullScreen);
+        pWebBrowser2->Release();
+    }
+    return hr;
+}
+
+inline HRESULT MOleCtrl::put_FullScreen(VARIANT_BOOL bFullScreen)
+{
+    HRESULT hr = E_FAIL;
+    if (IWebBrowser2 *pWebBrowser2 = GetWebBrowser2())
+    {
+        hr = pWebBrowser2->put_FullScreen(bFullScreen);
+        pWebBrowser2->Release();
+    }
+    return hr;
+}
+
+inline HRESULT MOleCtrl::GoBack()
+{
+    HRESULT hr = E_FAIL;
+    if (IWebBrowser2 *pWebBrowser2 = GetWebBrowser2())
+    {
+        hr = pWebBrowser2->GoBack();
+        pWebBrowser2->Release();
+    }
+    return hr;
+}
+
+inline HRESULT MOleCtrl::GoForward()
+{
+    HRESULT hr = E_FAIL;
+    if (IWebBrowser2 *pWebBrowser2 = GetWebBrowser2())
+    {
+        hr = pWebBrowser2->GoForward();
+        pWebBrowser2->Release();
+    }
+    return hr;
+}
+
+inline HRESULT MOleCtrl::GoHome()
+{
+    HRESULT hr = E_FAIL;
+    if (IWebBrowser2 *pWebBrowser2 = GetWebBrowser2())
+    {
+        hr = pWebBrowser2->GoHome();
+        pWebBrowser2->Release();
+    }
+    return hr;
+}
+
+inline HRESULT MOleCtrl::Navigate(BSTR URL, VARIANT *Flags, VARIANT *TargetFrameName, VARIANT *PostData, VARIANT *Headers)
+{
+    HRESULT hr = E_FAIL;
+    if (IWebBrowser2 *pWebBrowser2 = GetWebBrowser2())
+    {
+        hr = pWebBrowser2->Navigate(URL, Flags, TargetFrameName, PostData, Headers);
+        pWebBrowser2->Release();
+    }
+    return hr;
+}
+
+inline HRESULT MOleCtrl::NavigateDx(const WCHAR *url)
+{
+    HRESULT hr = E_FAIL;
     if (IWebBrowser2 *pWebBrowser2 = GetWebBrowser2())
     {
         if (url == NULL)
             url = L"about:blank";
 
-        MVariant vURL(url), ve1, ve2, ve3, ve4;
-        HRESULT hr = pWebBrowser2->Navigate2(vURL, ve1, ve2, ve3, ve4);
+        MVariant vURL(url), ve;
+        hr = pWebBrowser2->Navigate2(vURL, ve, ve, ve, ve);
 
         pWebBrowser2->Release();
-
-        return hr;
     }
+    return hr;
+}
 
-    return E_FAIL;
+inline HRESULT MOleCtrl::Navigate2(VARIANT *URL, VARIANT *Flags, VARIANT *TargetFrameName, VARIANT *PostData, VARIANT *Headers)
+{
+    HRESULT hr = E_FAIL;
+    if (IWebBrowser2 *pWebBrowser2 = GetWebBrowser2())
+    {
+        hr = pWebBrowser2->Navigate2(URL, Flags, TargetFrameName, PostData, Headers);
+
+        pWebBrowser2->Release();
+    }
+    return hr;
+}
+
+inline HRESULT MOleCtrl::Refresh()
+{
+    HRESULT hr = E_FAIL;
+    if (IWebBrowser2 *pWebBrowser2 = GetWebBrowser2())
+    {
+        hr = pWebBrowser2->Refresh();
+        pWebBrowser2->Release();
+    }
+    return hr;
+}
+
+inline HRESULT MOleCtrl::Stop()
+{
+    HRESULT hr = E_FAIL;
+    if (IWebBrowser2 *pWebBrowser2 = GetWebBrowser2())
+    {
+        hr = pWebBrowser2->Stop();
+        pWebBrowser2->Release();
+    }
+    return hr;
+}
+
+inline HRESULT MOleCtrl::get_LocationName(BSTR *LocationName)
+{
+    HRESULT hr = E_FAIL;
+    if (IWebBrowser2 *pWebBrowser2 = GetWebBrowser2())
+    {
+        hr = pWebBrowser2->get_LocationName(LocationName);
+        pWebBrowser2->Release();
+    }
+    return hr;
+}
+
+inline HRESULT MOleCtrl::get_LocationURL(BSTR *LocationURL)
+{
+    HRESULT hr = E_FAIL;
+    if (IWebBrowser2 *pWebBrowser2 = GetWebBrowser2())
+    {
+        hr = pWebBrowser2->get_LocationURL(LocationURL);
+        pWebBrowser2->Release();
+    }
+    return hr;
 }
 
 inline BOOL MOleCtrl::CreateInstanceByURL(const OLECHAR *url)
@@ -275,10 +449,9 @@ inline BOOL MOleCtrl::CreateInstanceByURL(const OLECHAR *url)
                                     reinterpret_cast<void**>(&m_pWebBrowser2));
     if (SUCCEEDED(hr))
     {
-        hr = Navigate(url);
-        return SUCCEEDED(hr);
+        hr = NavigateDx(url);
     }
-    return FALSE;
+    return SUCCEEDED(hr);
 }
 
 inline VOID MOleCtrl::UIActivate()
