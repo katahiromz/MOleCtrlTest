@@ -3,7 +3,10 @@
 ////////////////////////////////////////////////////////////////////////////
 
 #ifndef MZC4_MOLECTRL_HPP_
-#define MZC4_MOLECTRL_HPP_      8       /* Version 8 */
+#define MZC4_MOLECTRL_HPP_      9       /* Version 9 */
+
+struct MVariant;
+class MOleCtrl;
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -252,7 +255,7 @@ inline HRESULT MOleCtrl::Navigate(const WCHAR *url)
             url = L"about:blank";
 
         MVariant vURL(url), ve1, ve2, ve3, ve4;
-        HRESULT hr = pWebBrowser2->Navigate2(&vURL, &ve1, &ve2, &ve3, &ve4);
+        HRESULT hr = pWebBrowser2->Navigate2(vURL, ve1, ve2, ve3, ve4);
 
         pWebBrowser2->Release();
 
