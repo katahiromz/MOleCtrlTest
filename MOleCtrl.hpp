@@ -63,6 +63,11 @@ struct MVariant : VARIANT
     {
         return this;
     }
+    operator LONG()
+    {
+        assert(vt == VT_I4);
+        return lVal;
+    }
     operator BSTR()
     {
         return bstrVal;
@@ -72,6 +77,16 @@ struct MVariant : VARIANT
         VariantClear(this);
         vt = VT_BSTR;
         return &bstrVal;
+    }
+    operator BYTE *()
+    {
+        assert(vt == VT_ARRAY | VT_UI1);
+        return reinterpret_cast<BYTE *>(parray->pvData);
+    }
+    operator const BYTE *() const
+    {
+        assert(vt == VT_ARRAY | VT_UI1);
+        return reinterpret_cast<const BYTE *>(parray->pvData);
     }
 };
 
