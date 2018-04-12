@@ -3,7 +3,7 @@
 ////////////////////////////////////////////////////////////////////////////
 
 #ifndef MZC4_MOLECTRL_HPP_
-#define MZC4_MOLECTRL_HPP_      11      /* Version 11 */
+#define MZC4_MOLECTRL_HPP_      12      /* Version 12 */
 
 struct MVariant;
 class MOleCtrl;
@@ -865,6 +865,7 @@ inline BOOL MOleCtrl::OnCreate(HWND hwnd, LPCREATESTRUCT lpCreateStruct)
     }
     else if (memcmp(szText, L"http://", 7 * sizeof(WCHAR)) == 0 ||
              memcmp(szText, L"https://", 8 * sizeof(WCHAR)) == 0 ||
+             memcmp(szText, L"ftp://", 6 * sizeof(WCHAR)) == 0 ||
              memcmp(szText, L"www.", 4 * sizeof(WCHAR)) == 0)
     {
         if (!CreateInstanceByURL(szText))
