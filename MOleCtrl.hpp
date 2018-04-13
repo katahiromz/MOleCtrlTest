@@ -3,7 +3,7 @@
 ////////////////////////////////////////////////////////////////////////////
 
 #ifndef MZC4_MOLECTRL_HPP_
-#define MZC4_MOLECTRL_HPP_      16      /* Version 16 */
+#define MZC4_MOLECTRL_HPP_      19      /* Version 19 */
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -29,113 +29,115 @@ struct MVariant : VARIANT
     {
         vt = VT_EMPTY;
     }
+
     MVariant(LONG i4)
     {
         vt = VT_I4;
         lVal = i4;
     }
+
     MVariant(const WCHAR *psz)
     {
         vt = VT_BSTR;
         bstrVal = ::SysAllocString(psz);
     }
+
     MVariant(const BYTE *pb, UINT cb)
     {
         SAFEARRAYBOUND bound = { cb, 0 };
         vt = VT_ARRAY | VT_UI1;
         parray = SafeArrayCreate(VT_UI1, cb, &bound);
     }
+
     MVariant(IUnknown *punk)
     {
         vt = VT_UNKNOWN;
         punkVal = punk;
         punkVal->AddRef();
     }
+
     MVariant(IDispatch *pdisp)
     {
         vt = VT_DISPATCH;
         pdispVal = pdisp;
         pdispVal->AddRef();
     }
+
     MVariant(const MVariant& var)
     {
         Copy(var);
     }
-    MVariant& operator=(const MVariant& var)
-    {
-        if (this != &var)
-        {
-            VariantClear(this);
-            Copy(var);
-        }
-        return *this;
-    }
+
+    MVariant& operator=(const MVariant& var);
     void Copy(const MVariant& var);
+
     ~MVariant()
     {
         VariantClear(this);
     }
+
     operator VARIANT *()
     {
         return this;
     }
+
     operator const VARIANT *() const
     {
         return this;
     }
+
     operator LONG() const
     {
         assert(vt == VT_I4);
         return lVal;
     }
+
     operator LONG&()
     {
         assert(vt == VT_I4);
         return lVal;
     }
+
     operator BSTR()
     {
         return bstrVal;
     }
+
     operator BSTR *()
     {
         VariantClear(this);
         vt = VT_BSTR;
         return &bstrVal;
     }
+
     operator BYTE *()
     {
         assert(vt == VT_ARRAY | VT_UI1);
         return reinterpret_cast<BYTE *>(parray->pvData);
     }
+
     operator const BYTE *() const
     {
         assert(vt == VT_ARRAY | VT_UI1);
         return reinterpret_cast<const BYTE *>(parray->pvData);
     }
+
     operator IUnknown *()
     {
         assert(vt == VT_UNKNOWN);
         return punkVal;
     }
+
     operator IDispatch *()
     {
         assert(vt == VT_DISPATCH);
         return pdispVal;
     }
-    HRESULT QueryInterface(REFIID riid, void **ppvObject)
-    {
-        assert(vt == VT_UNKNOWN || vt == VT_DISPATCH);
-        if (vt == VT_UNKNOWN)
-        {
-            return punkVal->QueryInterface(riid, ppvObject);
-        }
-        if (vt == VT_DISPATCH)
-        {
-            return pdispVal->QueryInterface(riid, ppvObject);
-        }
-        return E_FAIL;
-    }
+
+    HRESULT QueryInterface(REFIID riid, void **ppvObject);
+    IUnknown *DetachUnknown();
+    IDispatch *DetachDispatch();
+
     void InvokeDx(const WCHAR *pszName, UINT cArgs, VARIANT *pArray,
                   WORD wFlags = DISPATCH_METHOD, VARIANT *pResult = NULL)
     {
@@ -342,6 +344,16 @@ InvokeDx(IDispatch *disp, const WCHAR *pszName, UINT cArgs, VARIANT *pArray,
 
 ////////////////////////////////////////////////////////////////////////////
 
+inline MVariant& MVariant::operator=(const MVariant& var)
+{
+    if (this != &var)
+    {
+        VariantClear(this);
+        Copy(var);
+    }
+    return *this;
+}
+
 inline void MVariant::Copy(const MVariant& var)
 {
     CopyMemory(this, &var, sizeof(var));
@@ -361,6 +373,38 @@ inline void MVariant::Copy(const MVariant& var)
     default:
         break;
     }
+}
+
+inline HRESULT MVariant::QueryInterface(REFIID riid, void **ppvObject)
+{
+    assert(vt == VT_UNKNOWN || vt == VT_DISPATCH);
+    if (vt == VT_UNKNOWN)
+    {
+        return punkVal->QueryInterface(riid, ppvObject);
+    }
+    if (vt == VT_DISPATCH)
+    {
+        return pdispVal->QueryInterface(riid, ppvObject);
+    }
+    return E_FAIL;
+}
+
+inline IUnknown *MVariant::DetachUnknown()
+{
+    assert(vt == VT_UNKNOWN);
+    IUnknown *ret = punkVal;
+    vt = VT_EMPTY;
+    punkVal = NULL;
+    return ret;
+}
+
+inline IDispatch *MVariant::DetachDispatch()
+{
+    assert(vt == VT_DISPATCH);
+    IDispatch *ret = pdispVal;
+    vt = VT_EMPTY;
+    pdispVal = NULL;
+    return ret;
 }
 
 ////////////////////////////////////////////////////////////////////////////
