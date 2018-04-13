@@ -19,7 +19,8 @@ struct MDispException;
 
 void MZCAPI
 InvokeDx(IDispatch *disp, const WCHAR *pszName, UINT cArgs, VARIANT *pArray,
-         WORD wFlags = DISPATCH_METHOD, VARIANT *pResult = NULL); // throws MDispException
+         WORD wFlags = DISPATCH_METHOD,
+         VARIANT *pResult = NULL); // throws MDispException
 
 ////////////////////////////////////////////////////////////////////////////
 
