@@ -379,7 +379,7 @@ inline MVariant& MVariant::operator=(const MVariant& var)
 
 inline void MVariant::Copy(const MVariant& var)
 {
-    CopyMemory(this, &var, sizeof(var));
+    vt = var.vt;
     switch (vt)
     {
     case VT_BSTR:
@@ -394,16 +394,20 @@ inline void MVariant::Copy(const MVariant& var)
         pdispVal->AddRef();
         break;
     default:
-        if (vt & VT_ARRAY)
+        if (var.vt & VT_ARRAY)
         {
             SAFEARRAY *psa = NULL;
             SafeArrayCopy(parray, &psa);
             parray = psa;
-            break;
         }
-        assert(!(vt & VT_BYREF));
-        assert(!(vt & VT_VECTOR));
-        assert(!(vt & VT_VARIANT));
+        else
+        {
+            assert(!(vt & VT_ARRAY));
+            assert(!(vt & VT_BYREF));
+            assert(!(vt & VT_VECTOR));
+            assert(!(vt & VT_VARIANT));
+            CopyMemory(this, &var, sizeof(var));
+        }
         break;
     }
 }
