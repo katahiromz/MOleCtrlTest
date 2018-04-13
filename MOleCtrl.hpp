@@ -3,10 +3,7 @@
 ////////////////////////////////////////////////////////////////////////////
 
 #ifndef MZC4_MOLECTRL_HPP_
-#define MZC4_MOLECTRL_HPP_      14      /* Version 14 */
-
-struct MVariant;
-class MOleCtrl;
+#define MZC4_MOLECTRL_HPP_      15      /* Version 15 */
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -14,6 +11,15 @@ class MOleCtrl;
 
 #include <exdisp.h>
 #include <ocidl.h>
+
+struct MVariant;
+class MOleCtrl;
+
+struct MDispException;
+
+inline void MZCAPI
+InvokeDx(IDispatch *disp, const WCHAR *pszName, UINT cArgs, VARIANT *pArray,
+         WORD wFlags = DISPATCH_METHOD, VARIANT *pResult = NULL); // throws MDispException
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -43,14 +49,28 @@ struct MVariant : VARIANT
     {
         vt = VT_DISPATCH;
         pdispVal = pdisp;
-        pdisp->AddRef();
+        pdispVal->AddRef();
     }
     MVariant(IUnknown *punk)
     {
         vt = VT_UNKNOWN;
         punkVal = punk;
-        punk->AddRef();
+        punkVal->AddRef();
     }
+    MVariant(const MVariant& var)
+    {
+        Copy(var);
+    }
+    MVariant& operator=(const MVariant& var)
+    {
+        if (this != &var)
+        {
+            VariantClear(this);
+            Copy(var);
+        }
+        return *this;
+    }
+    void Copy(const MVariant& var);
     ~MVariant()
     {
         VariantClear(this);
@@ -63,7 +83,12 @@ struct MVariant : VARIANT
     {
         return this;
     }
-    operator LONG()
+    operator LONG() const
+    {
+        assert(vt == VT_I4);
+        return lVal;
+    }
+    operator LONG&()
     {
         assert(vt == VT_I4);
         return lVal;
@@ -87,6 +112,43 @@ struct MVariant : VARIANT
     {
         assert(vt == VT_ARRAY | VT_UI1);
         return reinterpret_cast<const BYTE *>(parray->pvData);
+    }
+    operator IDispatch *()
+    {
+        assert(vt == VT_DISPATCH);
+        return pdispVal;
+    }
+    operator IUnknown *()
+    {
+        assert(vt == VT_UNKNOWN);
+        return punkVal;
+    }
+    HRESULT QueryInterface(REFIID riid, void **ppvObject)
+    {
+        if (vt == VT_UNKNOWN)
+        {
+            return punkVal->QueryInterface(riid, ppvObject);
+        }
+        if (vt == VT_DISPATCH)
+        {
+            return pdispVal->QueryInterface(riid, ppvObject);
+        }
+        return E_FAIL;
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////
+
+struct MDispException
+{
+    HRESULT m_hr;
+    UINT m_uArgErr;
+
+    MDispException(HRESULT hr) : m_hr(hr)
+    {
+    }
+    MDispException(HRESULT hr, UINT uArgErr) : m_hr(hr), m_uArgErr(uArgErr)
+    {
     }
 };
 
@@ -231,7 +293,72 @@ public:
 };
 
 ////////////////////////////////////////////////////////////////////////////
+
+inline void MZCAPI
+InvokeDx(IDispatch *disp, const WCHAR *pszName, UINT cArgs, VARIANT *pArray, 
+         WORD wFlags/* = DISPATCH_METHOD*/, VARIANT *pResult/* = NULL*/)
+{
+    MStringW strName = pszName;
+    OLECHAR *pName = &strName[0];
+
+    DISPID dispid;
+    HRESULT hr;
+    hr = disp->GetIDsOfNames(IID_NULL, &pName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr))
+        throw MDispException(hr);
+
+    DISPID     dispid_put = DISPID_PROPERTYPUT;
+    DISPPARAMS params;
+    params.cArgs = cArgs;
+    params.rgvarg = pArray;
+    if (wFlags & DISPATCH_PROPERTYPUT)
+    {
+        params.cNamedArgs = 1;
+        params.rgdispidNamedArgs = &dispid_put;
+    }
+    else
+    {
+        params.cNamedArgs = 0;
+        params.rgdispidNamedArgs = NULL;
+    }
+
+    UINT uArgErr;
+    hr = disp->Invoke(dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT, wFlags,
+                      &params, pResult, NULL, &uArgErr);
+    if (FAILED(hr))
+    {
+        if (hr == DISP_E_TYPEMISMATCH || hr == DISP_E_PARAMNOTFOUND)
+            throw MDispException(hr, uArgErr);
+        throw MDispException(hr);
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////
+
+inline void MVariant::Copy(const MVariant& var)
+{
+    CopyMemory(this, &var, sizeof(var));
+    switch (vt)
+    {
+    case VT_BSTR:
+        bstrVal = ::SysAllocString(var.bstrVal);
+        break;
+    case VT_DISPATCH:
+        pdispVal = var.pdispVal;
+        pdispVal->AddRef();
+        break;
+    case VT_UNKNOWN:
+        punkVal = var.punkVal;
+        punkVal->AddRef();
+        break;
+    default:
+        break;
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////
 // inlines
+
 
 inline MOleCtrl::MOleCtrl() : m_cRefs(1), m_hwndParent(NULL),
     m_pUnknown(NULL), m_pWebBrowser2(NULL)
