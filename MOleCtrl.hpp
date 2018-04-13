@@ -3,7 +3,7 @@
 ////////////////////////////////////////////////////////////////////////////
 
 #ifndef MZC4_MOLECTRL_HPP_
-#define MZC4_MOLECTRL_HPP_      15      /* Version 15 */
+#define MZC4_MOLECTRL_HPP_      16      /* Version 16 */
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -45,17 +45,17 @@ struct MVariant : VARIANT
         vt = VT_ARRAY | VT_UI1;
         parray = SafeArrayCreate(VT_UI1, cb, &bound);
     }
-    MVariant(IDispatch *pdisp)
-    {
-        vt = VT_DISPATCH;
-        pdispVal = pdisp;
-        pdispVal->AddRef();
-    }
     MVariant(IUnknown *punk)
     {
         vt = VT_UNKNOWN;
         punkVal = punk;
         punkVal->AddRef();
+    }
+    MVariant(IDispatch *pdisp)
+    {
+        vt = VT_DISPATCH;
+        pdispVal = pdisp;
+        pdispVal->AddRef();
     }
     MVariant(const MVariant& var)
     {
@@ -113,18 +113,19 @@ struct MVariant : VARIANT
         assert(vt == VT_ARRAY | VT_UI1);
         return reinterpret_cast<const BYTE *>(parray->pvData);
     }
-    operator IDispatch *()
-    {
-        assert(vt == VT_DISPATCH);
-        return pdispVal;
-    }
     operator IUnknown *()
     {
         assert(vt == VT_UNKNOWN);
         return punkVal;
     }
+    operator IDispatch *()
+    {
+        assert(vt == VT_DISPATCH);
+        return pdispVal;
+    }
     HRESULT QueryInterface(REFIID riid, void **ppvObject)
     {
+        assert(vt == VT_UNKNOWN || vt == VT_DISPATCH);
         if (vt == VT_UNKNOWN)
         {
             return punkVal->QueryInterface(riid, ppvObject);
@@ -134,6 +135,12 @@ struct MVariant : VARIANT
             return pdispVal->QueryInterface(riid, ppvObject);
         }
         return E_FAIL;
+    }
+    void InvokeDx(const WCHAR *pszName, UINT cArgs, VARIANT *pArray,
+                  WORD wFlags = DISPATCH_METHOD, VARIANT *pResult = NULL)
+    {
+        assert(vt == VT_DISPATCH);
+        ::InvokeDx(pdispVal, pszName, cArgs, pArray, wFlags, pResult);
     }
 };
 
@@ -343,13 +350,13 @@ inline void MVariant::Copy(const MVariant& var)
     case VT_BSTR:
         bstrVal = ::SysAllocString(var.bstrVal);
         break;
-    case VT_DISPATCH:
-        pdispVal = var.pdispVal;
-        pdispVal->AddRef();
-        break;
     case VT_UNKNOWN:
         punkVal = var.punkVal;
         punkVal->AddRef();
+        break;
+    case VT_DISPATCH:
+        pdispVal = var.pdispVal;
+        pdispVal->AddRef();
         break;
     default:
         break;
