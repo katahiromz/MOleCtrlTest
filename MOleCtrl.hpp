@@ -3,7 +3,7 @@
 ////////////////////////////////////////////////////////////////////////////
 
 #ifndef MZC4_MOLECTRL_HPP_
-#define MZC4_MOLECTRL_HPP_      19      /* Version 19 */
+#define MZC4_MOLECTRL_HPP_      21      /* Version 21 */
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -42,12 +42,7 @@ struct MVariant : VARIANT
         bstrVal = ::SysAllocString(psz);
     }
 
-    MVariant(const BYTE *pb, UINT cb)
-    {
-        SAFEARRAYBOUND bound = { cb, 0 };
-        vt = VT_ARRAY | VT_UI1;
-        parray = SafeArrayCreate(VT_UI1, cb, &bound);
-    }
+    MVariant(const BYTE *pb, UINT cb);
 
     MVariant(IUnknown *punk)
     {
@@ -69,6 +64,7 @@ struct MVariant : VARIANT
     }
 
     MVariant& operator=(const MVariant& var);
+
     void Copy(const MVariant& var);
 
     ~MVariant()
@@ -135,6 +131,7 @@ struct MVariant : VARIANT
     }
 
     HRESULT QueryInterface(REFIID riid, void **ppvObject);
+
     IUnknown *DetachUnknown();
     IDispatch *DetachDispatch();
 
@@ -344,6 +341,22 @@ InvokeDx(IDispatch *disp, const WCHAR *pszName, UINT cArgs, VARIANT *pArray,
 
 ////////////////////////////////////////////////////////////////////////////
 
+inline MVariant::MVariant(const BYTE *pb, UINT cb)
+{
+    SAFEARRAYBOUND bound = { cb, 0 };
+    vt = VT_ARRAY | VT_UI1;
+    parray = SafeArrayCreate(VT_UI1, cb, &bound);
+
+    BYTE *data;
+    HRESULT hr;
+    hr = SafeArrayAccessData(parray, reinterpret_cast<void **>(&data));
+    if (SUCCEEDED(hr))
+    {
+        CopyMemory(data, pb, cb);
+        SafeArrayUnaccessData(parray);
+    }
+}
+
 inline MVariant& MVariant::operator=(const MVariant& var)
 {
     if (this != &var)
@@ -371,6 +384,10 @@ inline void MVariant::Copy(const MVariant& var)
         pdispVal->AddRef();
         break;
     default:
+        assert(!(vt & VT_ARRAY));
+        assert(!(vt & VT_BYREF));
+        assert(!(vt & VT_VECTOR));
+        assert(!(vt & VT_VARIANT));
         break;
     }
 }
