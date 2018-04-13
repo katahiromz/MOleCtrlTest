@@ -17,7 +17,7 @@ class MOleCtrl;
 
 struct MDispException;
 
-inline void MZCAPI
+void MZCAPI
 InvokeDx(IDispatch *disp, const WCHAR *pszName, UINT cArgs, VARIANT *pArray,
          WORD wFlags = DISPATCH_METHOD, VARIANT *pResult = NULL); // throws MDispException
 
