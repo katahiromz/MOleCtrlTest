@@ -3,7 +3,7 @@
 ////////////////////////////////////////////////////////////////////////////
 
 #ifndef MZC4_MOLECTRL_HPP_
-#define MZC4_MOLECTRL_HPP_      24      /* Version 24 */
+#define MZC4_MOLECTRL_HPP_      25      /* Version 25 */
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -142,7 +142,8 @@ struct MVariant : VARIANT
         return pdispVal;
     }
 
-    HRESULT QueryInterface(REFIID riid, void **ppvObject);
+    template <typename T_OBJ>
+    HRESULT QueryInterfaceDx(REFIID riid, T_OBJ **ppvObj);
 
     IUnknown *DetachUnknown();
     IDispatch *DetachDispatch();
@@ -419,16 +420,17 @@ inline void MVariant::Copy(const MVariant& var)
     }
 }
 
-inline HRESULT MVariant::QueryInterface(REFIID riid, void **ppvObject)
+template <typename T_OBJ>
+inline HRESULT MVariant::QueryInterfaceDx(REFIID riid, T_OBJ **ppvObj)
 {
     assert(vt == VT_UNKNOWN || vt == VT_DISPATCH);
     if (vt == VT_UNKNOWN)
     {
-        return punkVal->QueryInterface(riid, ppvObject);
+        return punkVal->QueryInterface(riid, reinterpret_cast<void **>(ppvObj));
     }
     if (vt == VT_DISPATCH)
     {
-        return pdispVal->QueryInterface(riid, ppvObject);
+        return pdispVal->QueryInterface(riid, reinterpret_cast<void **>(ppvObj));
     }
     return E_FAIL;
 }
