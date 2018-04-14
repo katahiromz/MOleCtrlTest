@@ -3,7 +3,7 @@
 ////////////////////////////////////////////////////////////////////////////
 
 #ifndef MZC4_MOLECTRL_HPP_
-#define MZC4_MOLECTRL_HPP_      23      /* Version 23 */
+#define MZC4_MOLECTRL_HPP_      24      /* Version 24 */
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -209,6 +209,14 @@ public:
     VOID Show(BOOL fVisible = TRUE);
     BOOL TranslateAccelerator(LPMSG pMsg);
     void DoVerb(LONG iVerb);
+
+    template <typename T_OBJ>
+    HRESULT QueryInterfaceDx(REFIID riid, T_OBJ **ppObj)
+    {
+        if (m_pUnknown == NULL)
+            return E_FAIL;
+        return m_pUnknown->QueryInterface(riid, reinterpret_cast<void **>(ppObj));
+    }
 
     // Web Browser actions
     IWebBrowser2 *GetWebBrowser2();
@@ -482,8 +490,7 @@ inline BOOL MOleCtrl::CreateInstanceByCLSID(const CLSID& clsid)
     if (IsEqualIID(clsid, IID_IWebBrowser2))
     {
         IWebBrowser2 *pwb;
-        hr = m_pUnknown->QueryInterface(IID_IWebBrowser2,
-                                        reinterpret_cast<void **>(&pwb));
+        hr = QueryInterfaceDx(IID_IWebBrowser2, &pwb);
         if (FAILED(hr))
         {
             m_pUnknown->Release();
@@ -494,8 +501,7 @@ inline BOOL MOleCtrl::CreateInstanceByCLSID(const CLSID& clsid)
     }
 
     IOleObject *pioo;
-    hr = m_pUnknown->QueryInterface(IID_IOleObject,
-                                    reinterpret_cast<void **>(&pioo));
+    hr = QueryInterfaceDx(IID_IOleObject, &pioo);
     if (FAILED(hr))
         return FALSE;
 
@@ -503,8 +509,7 @@ inline BOOL MOleCtrl::CreateInstanceByCLSID(const CLSID& clsid)
     pioo->Release();
 
     IPersistStreamInit *ppsi;
-    hr = m_pUnknown->QueryInterface(IID_IPersistStreamInit,
-                                    reinterpret_cast<void **>(&ppsi));
+    hr = QueryInterfaceDx(IID_IPersistStreamInit, &ppsi);
     if (SUCCEEDED(hr))
     {
         m_clsid = clsid;
@@ -681,8 +686,7 @@ inline BOOL MOleCtrl::CreateInstanceByURL(const OLECHAR *url)
         return FALSE;
 
     HRESULT hr;
-    hr = m_pUnknown->QueryInterface(IID_IWebBrowser2,
-                                    reinterpret_cast<void**>(&m_pWebBrowser2));
+    hr = QueryInterfaceDx(IID_IWebBrowser2, &m_pWebBrowser2);
     if (SUCCEEDED(hr))
     {
         hr = NavigateDx(url);
@@ -711,8 +715,7 @@ inline void MOleCtrl::DoVerb(LONG iVerb)
         return;
 
     IOleObject *pioo;
-    HRESULT hr = m_pUnknown->QueryInterface(IID_IOleObject,
-                                            reinterpret_cast<void **>(&pioo));
+    HRESULT hr = QueryInterfaceDx(IID_IOleObject, &pioo);
     if (FAILED(hr))
         return;
 
@@ -733,8 +736,7 @@ inline VOID MOleCtrl::DestroyInstance()
     }
 
     IOleObject *pioo;
-    HRESULT hr = m_pUnknown->QueryInterface(IID_IOleObject,
-                                            reinterpret_cast<void **>(&pioo));
+    HRESULT hr = QueryInterfaceDx(IID_IOleObject, &pioo);
     if (SUCCEEDED(hr))
     {
         pioo->Close(OLECLOSE_NOSAVE);
@@ -743,8 +745,7 @@ inline VOID MOleCtrl::DestroyInstance()
     }
 
     IOleInPlaceObject *pipo;
-    hr = m_pUnknown->QueryInterface(IID_IOleInPlaceObject,
-                                    reinterpret_cast<void **>(&pipo));
+    hr = QueryInterfaceDx(IID_IOleInPlaceObject, &pipo);
     if (SUCCEEDED(hr))
     {
         pipo->UIDeactivate();
@@ -762,8 +763,7 @@ inline BOOL MOleCtrl::TranslateAccelerator(LPMSG pMsg)
         return FALSE;
 
     IOleInPlaceActiveObject *pao;
-    HRESULT hr = m_pUnknown->QueryInterface(IID_IOleInPlaceActiveObject,
-                                            reinterpret_cast<void **>(&pao));
+    HRESULT hr = QueryInterfaceDx(IID_IOleInPlaceActiveObject, &pao);
     if (SUCCEEDED(hr))
     {
         hr = pao->TranslateAccelerator(pMsg);
@@ -779,8 +779,7 @@ inline IDispatch *MOleCtrl::GetDispatch()
         return NULL;
 
     IDispatch *pDispatch;
-    HRESULT hr = m_pUnknown->QueryInterface(IID_IDispatch,
-                                            reinterpret_cast<void **>(&pDispatch));
+    HRESULT hr = QueryInterfaceDx(IID_IDispatch, &pDispatch);
     if (SUCCEEDED(hr))
         return pDispatch;
     return NULL;
@@ -1134,8 +1133,7 @@ inline void MOleCtrl::OnSize(HWND hwnd, UINT state, int cx, int cy)
         return;
 
     IOleInPlaceObject *pipo;
-    HRESULT hr = m_pUnknown->QueryInterface(IID_IOleInPlaceObject,
-                                            reinterpret_cast<void **>(&pipo));
+    HRESULT hr = QueryInterfaceDx(IID_IOleInPlaceObject, &pipo);
     if (FAILED(hr))
         return;
 
@@ -1157,8 +1155,7 @@ inline void MOleCtrl::OnPaint(HWND hwnd)
     if (HDC hDC = BeginPaint(m_hwnd, &ps))
     {
         IOleObject *pioo;
-        hr = m_pUnknown->QueryInterface(IID_IOleObject,
-                                        reinterpret_cast<void **>(&pioo));
+        hr = QueryInterfaceDx(IID_IOleObject, &pioo);
         if (SUCCEEDED(hr))
         {
             IViewObject *pView;
