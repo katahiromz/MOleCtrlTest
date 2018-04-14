@@ -3,7 +3,7 @@
 ////////////////////////////////////////////////////////////////////////////
 
 #ifndef MZC4_MOLECTRL_HPP_
-#define MZC4_MOLECTRL_HPP_      22      /* Version 22 */
+#define MZC4_MOLECTRL_HPP_      23      /* Version 23 */
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -402,10 +402,6 @@ inline void MVariant::Copy(const MVariant& var)
         }
         else
         {
-            assert(!(vt & VT_ARRAY));
-            assert(!(vt & VT_BYREF));
-            assert(!(vt & VT_VECTOR));
-            assert(!(vt & VT_VARIANT));
             CopyMemory(this, &var, sizeof(var));
         }
         break;
