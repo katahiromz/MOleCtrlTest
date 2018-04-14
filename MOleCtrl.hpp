@@ -142,9 +142,6 @@ struct MVariant : VARIANT
         return pdispVal;
     }
 
-    template <typename T_OBJ>
-    HRESULT QueryInterfaceDx(REFIID riid, T_OBJ **ppvObj);
-
     IUnknown *DetachUnknown();
     IDispatch *DetachDispatch();
 
@@ -154,6 +151,9 @@ struct MVariant : VARIANT
         assert(vt == VT_DISPATCH);
         ::InvokeDx(pdispVal, pszName, cArgs, pArray, wFlags, pResult);
     }
+
+    template <typename T_OBJ>
+    HRESULT QueryInterfaceDx(REFIID riid, T_OBJ **ppvObj);
 };
 
 ////////////////////////////////////////////////////////////////////////////
