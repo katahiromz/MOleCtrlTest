@@ -23,6 +23,7 @@ InvokeDx(IDispatch *disp, const WCHAR *pszName, UINT cArgs, VARIANT *pArray,
          VARIANT *pResult = NULL); // throws MDispException
 
 ////////////////////////////////////////////////////////////////////////////
+// MVariant --- the variant class (VARIANT wrapper)
 
 struct MVariant : VARIANT
 {
@@ -155,6 +156,7 @@ struct MVariant : VARIANT
 };
 
 ////////////////////////////////////////////////////////////////////////////
+// MDispException --- exception for InvokeDx function
 
 struct MDispException
 {
@@ -170,6 +172,7 @@ struct MDispException
 };
 
 ////////////////////////////////////////////////////////////////////////////
+// MOleCtrl --- MZC4 OLE control class
 // NOTE: IMPLEMENT_DYNAMIC(MOleCtrl) is required in a *.cpp source file.
 
 class MOleCtrl :
